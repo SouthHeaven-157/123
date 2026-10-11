@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Read the Room · 人格预演工作台</title>
+  <meta name="description" content="从材料建立特定人格，预演对话，比较不同的表达路径。">
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="chat.css">
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <a class="brand" href="#"><span class="brand-mark">r<span>r</span></span><span>Read the Room<small>把对话，先聊一遍。</small></span></a>
+      <div class="workspace-label">你的工作区 <span>LOCAL</span></div>
+      <nav id="navigation" aria-label="工作流程"></nav>
+      <div class="sidebar-project"><span class="eyebrow">当前项目</span><strong>一次更好的沟通</strong><p>材料提供依据，预演提供可能。</p><div class="project-status"><i></i><span id="sideStatus">等待导入聊天</span></div></div>
+      <div class="sidebar-bottom"><button id="helpButton" class="nav-help"><span data-icon="help"></span> 功能说明 <span>↗</span></button><div class="local-note"><span data-icon="shield"></span>材料由你选择，结果由你确认</div></div>
+    </aside>
+    <div class="main-shell">
+      <header class="topbar"><div class="breadcrumbs">工作区 <span>/</span> 一次更好的沟通</div><div class="top-actions"><span class="demo-pill"><i></i>前端演示</span><button id="saveButton" class="button small"><span data-icon="save"></span>保存工作区</button><span class="avatar">你</span></div></header>
+      <main>
+        <div class="page-intro"><div><div class="eyebrow" id="pageEyebrow">01 / 建立对话的依据</div><h1 id="pageTitle">从你们的对话开始。</h1><p id="pageDescription">放入聊天记录或其他材料，让特定对象的表达方式有迹可循。</p></div><button id="sampleButton" class="button"><span data-icon="spark"></span>载入示例项目</button></div>
+        <div class="workflow" id="workflow" aria-label="预演步骤"></div>
+        <section class="demo-notice"><span data-icon="info"></span><span><strong>先体验流程。</strong> 当前使用虚构材料与规则演示回复，尚未接入 AI；导入后自动建立对象，无需手填人格。</span></section>
+        <div id="view"></div>
+        <footer class="page-footer"><span>每一次预演，都只是探索一种可能。</span><span>READ THE ROOM / PROTOTYPE 01</span></footer>
+      </main>
+    </div>
+  </div>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <dialog id="helpDialog"><div class="dialog-head"><div><span class="eyebrow">QUICK GUIDE</span><h2>导入聊天记录，就能开始预演。</h2></div><button class="icon-button" id="closeHelp" aria-label="关闭功能说明">×</button></div><div class="help-grid"><article><b>01</b><h3>导入聊天记录</h3><p>导入 TXT、MD、JSON 后自动识别对象并进入预演；粘贴记录则点击“导入并开始预演”。不需要填写人格。</p></article><article><b>02</b><h3>自动建立对象</h3><p>系统整理人格依据并保存版本。画像仅供查看，无需确认；记录含多人时可切换预演对象。</p></article><article><b>03</b><h3>发送 / 从这里分叉</h3><p>发送消息继续试聊。从你的一条消息处分叉，保留之前的对话，尝试另一种说法。</p></article><article><b>04</b><h3>比较分支 / 修改后复演</h3><p>选择两条路径并排查看。检查边界与下一步，按建议修改后形成新分支。</p></article></div><div class="dialog-note">保存工作区：在本地预览服务中，将材料、人格及分支保存到项目的 D 盘目录。没有真实消息发送功能。</div></dialog>
+  <script src="app.js"></script>
+  <script src="preflight.js"></script>
+</body>
+</html>
