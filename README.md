@@ -1,4 +1,4 @@
-# Read the Room 本地预演工作台
+# Read the Room 
 
 本版本把聊天记录导入、对象画像、对话预演和复盘接入 DMXAPI，Windows 微信记录可通过 WeChatBridge 的本地收件箱读取。本仓库提供网站代码和第三版 3D 模型，用于本地运行与协作。没有部署在线服务。
 
