@@ -1,0 +1,41 @@
+[
+  {
+    "id": "interview",
+    "file": "interview.glb",
+    "blend": "interview.blend",
+    "bytes": 15560044,
+    "runtime_camera": "Camera_FirstPerson",
+    "reference_camera": "Camera_Reference",
+    "characters": [
+      "Host"
+    ],
+    "source": "MakeHuman CC0 head mesh + original environment and clothing geometry",
+    "revision": "v3"
+  },
+  {
+    "id": "meeting",
+    "file": "meeting.glb",
+    "blend": "meeting.blend",
+    "bytes": 40320640,
+    "runtime_camera": "Camera_FirstPerson",
+    "reference_camera": "Camera_Reference",
+    "characters": [
+      "Host"
+    ],
+    "source": "MakeHuman CC0 head mesh + original environment and clothing geometry",
+    "revision": "v3"
+  },
+  {
+    "id": "school",
+    "file": "school.glb",
+    "blend": "school.blend",
+    "bytes": 18334176,
+    "runtime_camera": "Camera_FirstPerson",
+    "reference_camera": "Camera_Reference",
+    "characters": [
+      "Host"
+    ],
+    "source": "MakeHuman CC0 head mesh + original environment and clothing geometry",
+    "revision": "v3"
+  }
+]
