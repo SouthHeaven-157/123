@@ -2,6 +2,12 @@
 
 本版本把聊天记录导入、对象画像、对话预演和复盘接入 DMXAPI，Windows 微信记录可通过 WeChatBridge 的本地收件箱读取。本仓库提供网站代码和第三版 3D 模型，用于本地运行与协作。没有部署在线服务。
 
+## 发布 HTTPS 作品链接
+
+已加入云端部署配置：[部署到 Render](https://render.com/deploy?repo=https://github.com/SouthHeaven-157/123)。完整说明见 [DEPLOY.md](DEPLOY.md)。云端采用浏览器独立保存和 AI 访问码，在部署平台配置模型密钥。
+
+本机运行方式保持不变。以下是本机版说明，云端差异以 DEPLOY.md 为准。
+
 ## 首次配置
 
 复制 `.env.example` 为 `.env.local`，填入自己的 DMXAPI 和 Jev 密钥。Windows ZIP 导入需要 Python 3，可在 `.env.local` 中设置 `PYTHON_EXE=C:/实际路径/python.exe`。未配置密钥时仍能打开网站，AI 功能会提示配置。安装 Node.js 18 或更新版本后，运行 `node server.cjs`。本项目不需要 npm install。

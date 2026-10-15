@@ -1,0 +1,11 @@
+.git
+.env*
+!.env.example
+data
+qa
+temp
+node_modules
+__pycache__
+*.log
+*.blend1
+*.blend2

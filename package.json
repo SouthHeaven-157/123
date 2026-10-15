@@ -1,0 +1,1 @@
+{"name":"read-the-room","version":"0.2.0","private":true,"scripts":{"start":"node server.cjs","test":"node --test tests/cloud.test.cjs"},"engines":{"node":">=22"}}

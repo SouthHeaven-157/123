@@ -1,10 +1,11 @@
 'use strict';
 const fs=require('node:fs'),path=require('node:path'),crypto=require('node:crypto'),{execFile}=require('node:child_process');
-const ROOT=__dirname,DATA=path.join(ROOT,'data');fs.mkdirSync(DATA,{recursive:true});
+const ROOT=__dirname,DATA=process.env.DATA_DIR||path.join(ROOT,'data');fs.mkdirSync(DATA,{recursive:true});
 for(const line of (fs.existsSync(path.join(ROOT,'.env.local'))?fs.readFileSync(path.join(ROOT,'.env.local'),'utf8'):'').split(/\r?\n/)){const m=line.match(/^([A-Z_]+)=(.*)$/);if(m&&!process.env[m[1]])process.env[m[1]]=m[2].trim();}
-const config={key:process.env.DMX_API_KEY,base:process.env.DMX_BASE_URL,model:process.env.DMX_MODEL||'gpt-4o-mini'};
+const config={key:process.env.DMX_API_KEY,base:process.env.DMX_BASE_URL||'https://www.dmxapi.cn/v1',model:process.env.DMX_MODEL||'deepseek-v4-flash'};
+const cloud=process.env.APP_MODE==='cloud';
 const settingsPath=path.join(DATA,'settings.json');
-try{config.model=JSON.parse(fs.readFileSync(settingsPath)).model||config.model;}catch{}
+try{if(!cloud)config.model=JSON.parse(fs.readFileSync(settingsPath)).model||config.model;}catch{}
 const inbox=process.env.WECHATBRIDGE_INBOX||path.join(process.env.LOCALAPPDATA||'', 'WeChatBridge','Inbox','Ready');
 const drop=path.join(DATA,'wechat-imports');fs.mkdirSync(drop,{recursive:true});
 function fail(message,status=400){const e=new Error(message);e.status=status;throw e;}
@@ -33,20 +34,21 @@ function safeFile(root,relative){const resolved=path.resolve(root,relative);if(!
 function bridgeFiles(){const found=[];try{for(const batch of fs.readdirSync(inbox,{withFileTypes:true}).filter(d=>d.isDirectory()&&!d.isSymbolicLink()).slice(0,500)){try{const dir=path.join(inbox,batch.name),m=JSON.parse(fs.readFileSync(path.join(dir,'manifest.json'),'utf8'));if(m.schemaVersion!==1||!Array.isArray(m.items))continue;for(const item of m.items){const file=safeFile(dir,item.relativePath||'');if(file&&/\.(zip|txt|json|md)$/i.test(file))found.push({file,name:item.displayName||path.basename(file),createdAt:m.createdAt});}}catch{}}}catch{}
  for(const item of fs.readdirSync(drop,{withFileTypes:true})){const file=safeFile(drop,item.name);if(file&&/\.(zip|txt|json|md)$/i.test(item.name))found.push({file,name:item.name,createdAt:fs.statSync(file).mtime.toISOString()});}
  return found.map(f=>({...f,id:crypto.createHash('sha256').update(f.file).digest('hex').slice(0,24)})).sort((a,b)=>String(b.createdAt).localeCompare(String(a.createdAt)));}
-function unzip(file){return new Promise((resolve,reject)=>{const python=process.env.PYTHON_EXE||path.join(process.env.USERPROFILE,'.cache','codex-runtimes','codex-primary-runtime','dependencies','python','python.exe');execFile(python,['-B',path.join(ROOT,'bridge_zip.py'),file],{windowsHide:true,timeout:20000,maxBuffer:3*1024*1024,env:{...process.env,PYTHONIOENCODING:'utf-8',TEMP:DATA,TMP:DATA}},(error,out)=>{if(error)return reject(Object.assign(new Error('ZIP 无法解析：请使用微信导出的、包含聊天记录.txt 的压缩包'),{status:400}));try{resolve(JSON.parse(out));}catch{reject(Object.assign(new Error('压缩包解析失败'),{status:400}));}});});}
+function unzip(file){return new Promise((resolve,reject)=>{const bundled=path.join(process.env.USERPROFILE||'','.cache','codex-runtimes','codex-primary-runtime','dependencies','python','python.exe'),python=process.env.PYTHON_EXE||(fs.existsSync(bundled)?bundled:process.platform==='win32'?'python':'python3');execFile(python,['-B',path.join(ROOT,'bridge_zip.py'),file],{windowsHide:true,timeout:20000,maxBuffer:3*1024*1024,env:{...process.env,PYTHONIOENCODING:'utf-8',TEMP:DATA,TMP:DATA}},(error,out)=>{if(error)return reject(Object.assign(new Error('ZIP 无法解析：请使用微信导出的、包含聊天记录.txt 的压缩包'),{status:400}));try{resolve(JSON.parse(out));}catch{reject(Object.assign(new Error('压缩包解析失败'),{status:400}));}});});}
 async function readImport(file){if(fs.statSync(file).size>40*1024*1024)fail('文件超过 40 MB，请选取较小的聊天片段');let material;if(/\.zip$/i.test(file)){material=(await unzip(file)).text;}else material=fs.readFileSync(file,'utf8');if(/\.json$/i.test(file)){try{const data=JSON.parse(material),rows=Array.isArray(data)?data:data.messages;if(!Array.isArray(rows))fail('JSON 应包含消息数组');material=rows.map(r=>`${r.sender||r.speaker||r.name||'未知'}：${r.text||r.content||r.message||''}`).join('\n');}catch{fail('JSON 聊天记录格式无效');}}
  const records=parseRecords(material);if(!records.length)fail('未识别到聊天记录，请保留说话人和消息内容');return {material:records.map(r=>`${r.speaker}：${r.text.replace(/\n/g,' / ')}`).join('\n'),speakers:[...new Set(records.map(r=>r.speaker))],count:records.length};}
 async function api(route,method,body){
- if(route==='/api/status'&&method==='GET')return {configured:!!config.key,model:config.model,bridgeReady:fs.existsSync(inbox),inbox,dropFolder:drop};
+ if(route==='/api/status'&&method==='GET')return cloud?{configured:!!config.key,radarConfigured:!!process.env.JEV_API_KEY,model:config.model,bridgeReady:false,uploadLimitMB:10}:{configured:!!config.key,model:config.model,bridgeReady:fs.existsSync(inbox),inbox,dropFolder:drop,uploadLimitMB:40};
  if(route==='/api/models'&&method==='GET'){const result=await remote('/models');return {models:(result.data||[]).map(m=>m.id).filter(Boolean)};}
- if(route==='/api/settings'&&method==='POST'){const model=string(body.model,150),result=await remote('/models');if(!(result.data||[]).some(m=>m.id===model))fail('该模型不在可用列表');fs.writeFileSync(settingsPath,JSON.stringify({model}));config.model=model;return {model};}
+ if(route==='/api/settings'&&method==='POST'){if(cloud)fail('云端模型由部署者配置',403);const model=string(body.model,150),result=await remote('/models');if(!(result.data||[]).some(m=>m.id===model))fail('该模型不在可用列表');fs.writeFileSync(settingsPath,JSON.stringify({model}));config.model=model;return {model};}
  if(route==='/api/personas'&&method==='POST')return personas(body);
  if(route==='/api/rehearse'&&method==='POST')return rehearse(body);
  if(route==='/api/review'&&method==='POST')return review(body);
  if(route==='/api/radar'&&method==='POST')return require('./jev.cjs').analyze(body);
+ if(route.startsWith('/api/bridge')&&cloud)fail('云端版请直接上传微信聊天文件',403);
  if(route==='/api/bridge'&&method==='GET')return {ready:fs.existsSync(inbox),files:bridgeFiles().map(({file,...rest})=>rest),dropFolder:drop};
  if(route==='/api/bridge/import'&&method==='POST'){const entry=bridgeFiles().find(f=>f.id===body.id);if(!entry)fail('记录不存在或已被微信流清理',404);return {...await readImport(entry.file),name:entry.name};}
- if(route==='/api/upload'&&method==='POST'){if(!/\.(zip|txt|md|json)$/i.test(body.name||''))fail('仅支持 ZIP/TXT/MD/JSON');if(typeof body.base64!=='string'||body.base64.length>56*1024*1024)fail('上传文件过大',413);const file=path.join(DATA,crypto.randomUUID()+path.extname(body.name));fs.writeFileSync(file,Buffer.from(body.base64,'base64'));try{return {...await readImport(file),name:path.basename(body.name)};}finally{fs.unlinkSync(file);}}
+ if(route==='/api/upload'&&method==='POST'){if(!/\.(zip|txt|md|json)$/i.test(body.name||''))fail('仅支持 ZIP/TXT/MD/JSON');if(typeof body.base64!=='string'||body.base64.length>(cloud?14:56)*1024*1024)fail('上传文件过大',413);const bytes=Buffer.from(body.base64,'base64');if(bytes.length>(cloud?10:40)*1024*1024)fail('上传文件过大',413);const file=path.join(DATA,crypto.randomUUID()+path.extname(body.name));fs.writeFileSync(file,bytes);try{return {...await readImport(file),name:path.basename(body.name)};}finally{fs.unlinkSync(file);}}
  fail('接口不存在',404);
 }
-module.exports={api,parseRecords,readImport,config,remote};
+module.exports={api,parseRecords,readImport,config,remote,DATA};

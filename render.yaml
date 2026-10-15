@@ -1,0 +1,26 @@
+services:
+  - type: web
+    name: read-the-room
+    runtime: docker
+    plan: free
+    region: singapore
+    branch: main
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /healthz
+    envVars:
+      - key: APP_MODE
+        value: cloud
+      - key: API_ACCESS_CODE
+        generateValue: true
+      - key: DMX_API_KEY
+        sync: false
+      - key: DMX_BASE_URL
+        value: https://www.dmxapi.cn/v1
+      - key: DMX_MODEL
+        value: deepseek-v4-flash
+      - key: JEV_API_KEY
+        sync: false
+      - key: JEV_API_URL
+        value: https://www.dmxapi.cn/typesafe/v1/systemone
+      - key: JEV_MODEL
+        value: jev-1.13.0
